@@ -1,0 +1,53 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+      
+      - name: Install dependencies
+        run: make deps
+      
+      - name: Vet code
+        run: make vet
+      
+      - name: Run tests
+        run: make test
+  build:
+    name: Build
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Install dependencies
+        run: make deps
+      
+      - name: Build Project
+        run: make build
+
+      - name: Archive Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: literate-${{ matrix.os }}
+          path: literate

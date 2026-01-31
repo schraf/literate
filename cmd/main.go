@@ -1,0 +1,48 @@
+package main
+
+import (
+	"flag"
+	"log/slog"
+	"os"
+
+	"github.com/schraf/literate/internal"
+)
+
+func main() {
+	//--=====================================================================--
+	//--== ARGUMENT PARSING
+	//--=====================================================================--
+
+	var output string
+	var verbose bool
+
+	flag.StringVar(&output, "output", "", "output path for generated code")
+	flag.BoolVar(&verbose, "verbose", false, "verbose logging")
+	flag.Parse()
+
+	inputs := flag.Args()
+
+	//--=====================================================================--
+	//--== SETUP LOGGING
+	//--=====================================================================--
+
+	level := slog.LevelInfo
+	if verbose {
+		level = slog.LevelDebug
+	}
+
+	handler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: level,
+	})
+
+	slog.SetDefault(slog.New(handler))
+
+	//--=====================================================================--
+	//--== GENERATE SOURCE CODE FILES
+	//--=====================================================================--
+
+	if err := internal.GenerateCode(inputs, output); err != nil {
+		slog.Error(err.Error())
+		os.Exit(1)
+	}
+}
