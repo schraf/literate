@@ -20,6 +20,11 @@ run:
 	@echo "Running..."
 	@go run ./cmd/...
 
+generate:
+	@echo "Generating..."
+	@go run ./cmd/... README.md
+	@go fmt ./...
+
 doc:
 	@echo "Generating documentation..."
 	@go doc -all

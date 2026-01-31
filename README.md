@@ -115,3 +115,549 @@ To run tests or vet the code:
 make test
 make vet
 ```
+
+## Source Code
+
+This project is self-hosting. The following sections contain the source code used to build the `literate` tool.
+
+### Entry Point
+
+#### Argument Parsing
+
+We first define the arguments to the `literate` application. Outside of the
+list of input markdown files, we also support verbose logging and specifying a
+output directory. If no output directory is provided, we just default to the
+current working directory.
+
+```go {name="argument_parsing"}
+//--=====================================================================--
+//--== ARGUMENT PARSING
+//--=====================================================================--
+
+var output string
+var verbose bool
+
+flag.StringVar(&output, "output", "", "output path for generated code")
+flag.BoolVar(&verbose, "verbose", false, "verbose logging")
+flag.Parse()
+
+inputs := flag.Args()
+```
+
+#### Logging Setup
+
+We will use the `slog` package for structured logging to standard output. If
+the `verbose` argument is set we will include debug level log messages to the
+output.
+
+```go {name="logging_setup"}
+//--=====================================================================--
+//--== SETUP LOGGING
+//--=====================================================================--
+
+level := slog.LevelInfo
+if verbose {
+	level = slog.LevelDebug
+}
+
+handler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+	Level: level,
+})
+
+slog.SetDefault(slog.New(handler))
+```
+
+#### Main
+
+The `main` will parse the command line arguments, setup logging, and then
+invoke the literate code generation process by using the `internal` package of
+this project.
+
+```go name="main" filename="cmd/main.go"
+package main
+
+import (
+	"flag"
+	"log/slog"
+	"os"
+
+	"github.com/schraf/literate/internal"
+)
+
+func main() {
+    {{include "argument_parsing"}}
+
+    {{include "logging_setup"}}
+
+	//--=====================================================================--
+	//--== GENERATE SOURCE CODE FILES
+	//--=====================================================================--
+
+	if err := internal.GenerateCode(inputs, output); err != nil {
+		slog.Error(err.Error())
+		os.Exit(1)
+	}
+}
+```
+
+### Internal Package
+
+#### Code Block Attributes
+
+In order for the literate tool to stitch together the code blocks that
+reference other code blocks, we need to add parse some attributes from the
+Markdown. 
+
+We will start by defining a regular expression that will parse the key value
+attribute pairs.
+
+```go {name="attribute_pattern"}
+var AttributePattern = regexp.MustCompile(`(\w+)="([^"]*)"`)
+```
+
+The only two attributes the tool needs is a `name` and optional `filename`. The
+`name` attribute is used to declare a unique name for the code block that
+others code blocks can include. If a code block has a `filename` attribute,
+then the code block output will be stored in that file.
+
+We will define a `CodeBlockAttributes` struct for holding these values.
+
+```go {name="code_block_attributes"}
+type CodeBlockAttributes struct {
+	Name     string
+	Filename string
+}
+```
+
+On the `CodeBlockAttributes` type we will add a function to parse the
+attributes out of an attributes string using the `AttributePattern` we defined
+above.
+
+```go {name="code_block_attributes_parse"}
+func (c *CodeBlockAttributes) Parse(input string) {
+	var attributes CodeBlockAttributes
+
+	matches := AttributePattern.FindAllStringSubmatch(input, -1)
+
+	for _, match := range matches {
+		switch match[1] {
+		case "name":
+			attributes.Name = match[2]
+		case "filename":
+			attributes.Filename = match[2]
+		}
+	}
+
+	*c = attributes
+}
+```
+
+#### Code Block
+
+For representing a single code block, we will define a type that contains the
+attributes associated with the block along with the contents of the block.
+
+```go {name="code_block"}
+type CodeBlock struct {
+	Attributes CodeBlockAttributes
+	Body       string
+}
+```
+
+#### Code Block Storage
+
+For storing all of the `CodeBlock` instances that are found while parsing the
+Markdown files, we will create a `CodeBlockStorage` type that will be the used
+to lookup blocks and files by name.
+
+```go {name="code_block_storage"}
+type CodeBlockStorage struct {
+	Blocks map[string]*CodeBlock
+	Files  map[string]*CodeBlock
+}
+```
+
+For instantiating a instance of a `CodeBlockStorage` we will add a new function for it.
+
+```go {name="new_code_block_storage"}
+func NewCodeBlockStorage() *CodeBlockStorage {
+	return &CodeBlockStorage{
+		Blocks: make(map[string]*CodeBlock),
+		Files:  make(map[string]*CodeBlock),
+	}
+}
+
+```
+
+Finally, we will add an `AddCodeBlock` function to the type so that we can validate its uniqueness
+before adding it to the storage.
+
+```go {name="add_code_block"}
+func (s *CodeBlockStorage) AddCodeBlock(block *CodeBlock) error {
+	if _, exists := s.Blocks[block.Attributes.Name]; exists {
+		return fmt.Errorf("duplicate code block name found '%s'", block.Attributes.Name)
+	}
+
+	if block.Attributes.Filename != "" {
+		if _, exists := s.Files[block.Attributes.Filename]; exists {
+			return fmt.Errorf("duplicate output file found '%s'", block.Attributes.Filename)
+		}
+
+		s.Files[block.Attributes.Filename] = block
+	}
+
+	s.Blocks[block.Attributes.Name] = block
+
+	return nil
+}
+```
+
+With these now in place, we will group this code together inside a single
+`codeblock.go` file in the internal package.
+
+```go name="codeblock" filename="internal/codeblock.go"
+package internal
+
+import (
+	"fmt"
+	"regexp"
+)
+
+//--=====================================================================--
+//--== CODE BLOCK ATTRIBUTES
+//--=====================================================================--
+
+{{include "attribute_pattern"}}
+
+{{include "code_block_attributes"}}
+
+{{include "code_block_attributes_parse"}}
+
+//--=====================================================================--
+//--== CODE BLOCK
+//--=====================================================================--
+
+{{include "code_block"}}
+
+//--=====================================================================--
+//--== CODE BLOCK STORAGE
+//--=====================================================================--
+
+{{include "code_block_storage"}}
+
+{{include "new_code_block_storage"}}
+
+{{include "add_code_block"}}
+
+```
+
+#### Markdown Parser
+
+The Markdown parser will be responsible for extracting all of the code blocks
+from input files. We will do this by creating a function `ParseMarkdownFile`
+which takes a filename as an argument and returns an iterator over each code
+block.
+
+```go {name="parse_markdown_function"}
+func ParseMarkdownFile(filename string) iter.Seq2[*CodeBlock, error] {
+	return func(yield func(*CodeBlock, error) bool) {
+		slog.Debug("parsing markdown file", slog.String("filename", filename))
+
+        {{include "parse_file"}}
+
+        {{include "extract_code_blocks"}}
+	}
+}
+```
+
+To parse a Markdown file we will use the `goldmark` Go package. 
+
+```go {name="parse_file"}
+//--=====================================================================--
+//--== PARSE SOURCE FILE DOCUMENT
+//--=====================================================================--
+
+parser := goldmark.DefaultParser()
+
+content, err := ioutil.ReadFile(filename)
+if err != nil {
+	yield(nil, fmt.Errorf("failed to read file '%s': %w", filename, err))
+	return
+}
+
+reader := text.NewReader(content)
+doc := parser.Parse(reader)
+```
+
+Once the document has been parsed, we can now walk the Abstract Syntax Tree
+(AST) to find each of the code blocks.
+
+```go {name="extract_code_blocks"}
+//--=====================================================================--
+//--== EXTRACT CODE BLOCKS
+//--=====================================================================--
+
+err = ast.Walk(doc, func(node ast.Node, entering bool) (ast.WalkStatus, error) {
+	if !entering {
+		return ast.WalkContinue, nil
+	}
+
+	if codeBlockNode, ok := node.(*ast.FencedCodeBlock); ok {
+		var codeBlock CodeBlock
+
+        {{include "parse_code_block_attributes"}}
+
+        {{include "extract_code_block_body"}}
+
+		//--=====================================================================--
+		//--== RETURN NEXT CODE BLOCK
+		//--=====================================================================--
+
+		slog.Debug("extracted code block", slog.String("name", codeBlock.Attributes.Name))
+
+		if !yield(&codeBlock, nil) {
+			return ast.WalkStop, nil
+		}
+	}
+
+	return ast.WalkContinue, nil
+})
+if err != nil {
+	yield(nil, fmt.Errorf("failed to parse file '%s': %w", filename, err))
+	return
+}
+```
+
+For each code block we encounter in the AST, we will first need to parse the attributes. If there is
+no name attribute we will skip the block.
+
+```go {name="parse_code_block_attributes"}
+//--=====================================================================--
+//--== PARSE CODE BLOCK ATTRIBUTES
+//--=====================================================================--
+
+info := string(codeBlockNode.Info.Value(content))
+codeBlock.Attributes.Parse(info)
+
+if codeBlock.Attributes.Name == "" {
+	return ast.WalkContinue, nil
+}
+```
+
+Now that we know this is a code block we will need to reference. We can extract
+the body of the block from the AST node.
+
+```go {name="extract_code_block_body"}
+//--=====================================================================--
+//--== EXTRACT CODE BLOCK BODY
+//--=====================================================================--
+
+var codeBody bytes.Buffer
+
+lines := codeBlockNode.Lines()
+
+for i := 0; i < lines.Len(); i++ {
+	line := lines.At(i)
+	codeBody.Write(line.Value(content))
+}
+
+codeBlock.Body = codeBody.String()
+```
+
+And here is the output file for the parser function in the `internal` package.
+
+```go name="parser" filename="internal/parser.go"
+package internal
+
+import (
+	"bytes"
+	"fmt"
+	"io/ioutil"
+	"iter"
+	"log/slog"
+
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/ast"
+	"github.com/yuin/goldmark/text"
+)
+
+{{include "parse_markdown_function"}}
+```
+
+#### Code Processor
+
+At this point we now have code for parsing and extracting code blocks from
+Markdown files and storing them into easy to reference maps. We will now need
+some code that will detangle all the code block references and generate the
+output source code files.
+
+We will start by defining the `Processor` struct which holds the configuration
+for the generation process.
+
+```go {name="processor_struct"}
+type Processor struct {
+	OutputPath string
+}
+
+func NewProcessor(output string) *Processor {
+	return &Processor{
+		OutputPath: output,
+	}
+}
+```
+
+The `GenerateCodeFiles` method iterates over all files defined in the storage,
+processes their content, and writes them to disk.
+
+```go {name="generate_code_files"}
+func (p Processor) GenerateCodeFiles(blocks *CodeBlockStorage) error {
+	processor := NewCodeBlockProcessor(blocks)
+
+	for _, block := range blocks.Files {
+		path := filepath.Join(p.OutputPath, block.Attributes.Filename)
+
+		code, err := processor.ProcessCodeBlock(block.Attributes.Name)
+		if err != nil {
+			return err
+		}
+
+		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+			return fmt.Errorf("failed to create directory for '%s': %w", path, err)
+		}
+
+		if err := ioutil.WriteFile(path, []byte(code), 0644); err != nil {
+			return fmt.Errorf("failed to write to file '%s': %w", path, err)
+		}
+
+		slog.Debug("saved code file", slog.String("filename", block.Attributes.Filename))
+	}
+
+	return nil
+}
+```
+
+To handle the actual expansion of code blocks and the `include` function, we
+define a `CodeBlockProcessor`. It maintains the state to detect recursion loops.
+
+```go {name="code_block_processor_struct"}
+type CodeBlockProcessor struct {
+	Funcs   template.FuncMap
+	Storage *CodeBlockStorage
+	State   map[string]bool
+}
+
+func NewCodeBlockProcessor(storage *CodeBlockStorage) *CodeBlockProcessor {
+	processor := &CodeBlockProcessor{
+		Storage: storage,
+		State:   make(map[string]bool),
+	}
+
+	processor.Funcs = template.FuncMap{
+		"include": processor.ProcessCodeBlock,
+	}
+
+	return processor
+}
+```
+
+The `ProcessCodeBlock` method resolves a block by name, parses it as a Go
+template, and executes it. This allows for nested inclusions.
+
+```go {name="process_code_block"}
+func (p *CodeBlockProcessor) ProcessCodeBlock(name string) (string, error) {
+	if p.State[name] {
+		return "", fmt.Errorf("recursive block inclusion: '%s'", name)
+	}
+
+	p.State[name] = true
+	defer func() { p.State[name] = false }()
+
+	block, ok := p.Storage.Blocks[name]
+	if !ok {
+		return "", fmt.Errorf("code block '%s' not found", name)
+	}
+
+	tmpl, err := template.New(name).Funcs(p.Funcs).Parse(block.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse code block '%s': %w", name, err)
+	}
+
+	var code bytes.Buffer
+
+	if err := tmpl.Execute(&code, nil); err != nil {
+		return "", fmt.Errorf("failed to generate code block '%s': %w", name, err)
+	}
+
+	return strings.TrimSpace(code.String()), nil
+}
+```
+
+Finally, we combine these parts into `internal/processor.go`.
+
+```go name="processor" filename="internal/processor.go"
+package internal
+
+import (
+	"bytes"
+	"fmt"
+	"io/ioutil"
+	"log/slog"
+	"os"
+	"path/filepath"
+	"strings"
+	"text/template"
+)
+
+//--=====================================================================--
+//--== PROCESSOR
+//--=====================================================================--
+
+{{include "processor_struct"}}
+
+{{include "generate_code_files"}}
+
+//--=====================================================================--
+//--== CODE BLOCK PROCESSOR
+//--=====================================================================--
+
+{{include "code_block_processor_struct"}}
+
+{{include "process_code_block"}}
+```
+
+#### Code Generator
+
+With the code block storage and parser now defined, we only need to create the `GenerateCode` function that
+our `main` calls.
+
+This function will handle:
+- Parsing each input Markdown file
+- Constructing a code block storage from each code block
+- Processing each code block output file
+
+```go name="generate" filename="internal/generate.go"
+package internal
+
+func GenerateCode(inputs []string, output string) error {
+	storage := NewCodeBlockStorage()
+
+	for _, input := range inputs {
+		for block, err := range ParseMarkdownFile(input) {
+			if err != nil {
+				return err
+			}
+
+			storage.AddCodeBlock(block)
+		}
+	}
+
+	processor := NewProcessor(output)
+
+	if err := processor.GenerateCodeFiles(storage); err != nil {
+		return err
+	}
+
+	return nil
+}
+```
+

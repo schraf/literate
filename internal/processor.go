@@ -11,6 +11,10 @@ import (
 	"text/template"
 )
 
+//--=====================================================================--
+//--== PROCESSOR
+//--=====================================================================--
+
 type Processor struct {
 	OutputPath string
 }
@@ -45,6 +49,10 @@ func (p Processor) GenerateCodeFiles(blocks *CodeBlockStorage) error {
 
 	return nil
 }
+
+//--=====================================================================--
+//--== CODE BLOCK PROCESSOR
+//--=====================================================================--
 
 type CodeBlockProcessor struct {
 	Funcs   template.FuncMap
