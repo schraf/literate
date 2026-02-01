@@ -23,7 +23,7 @@ generate: $(LITERATE_BIN)
 
 $(LITERATE_BIN):
 	@echo "Installing literate binary..."
-	@GOBIN=$(shell pwd) go install github.com/schraf/literate@66006c6
+	@GOBIN=$(shell pwd) go install github.com/schraf/literate@latest
 
 clean:
 	@echo "Cleaning..."
