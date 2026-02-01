@@ -37,9 +37,6 @@ jobs:
         with:
           go-version-file: 'go.mod'
 
-      - name: Install dependencies
-        run: make deps
-      
       - name: Build Project
         run: make build
 
