@@ -27,7 +27,7 @@ $(LITERATE_BIN):
 
 clean:
 	@echo "Cleaning..."
-	@rm -f $(LITERATE_BIN)
+	@rm -f $(LITERATE_BIN) *.go go.mod go.sum
 
 help:
 	@echo "Available targets:"

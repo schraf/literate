@@ -118,7 +118,32 @@ make vet
 
 ## Source Code
 
-This project is self-hosting. The following sections contain the source code used to build the `literate` tool.
+This project is self-hosting. The following sections contain the source code
+used to build the `literate` tool.
+
+### Module Definition
+
+We start by defining the Go module and its dependencies for this project
+
+```go {name="go_module" filename="go.mod"}
+module github.com/schraf/literate
+
+go 1.24.0
+
+require (
+	github.com/stretchr/testify v1.11.1
+	github.com/yuin/goldmark v1.7.16
+	golang.org/x/tools v0.41.0
+)
+
+require (
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	golang.org/x/mod v0.32.0 // indirect
+	golang.org/x/sync v0.19.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
+)
+```
 
 ### Entry Point
 
@@ -670,6 +695,8 @@ skeleton for the test file.
 package main
 
 import (
+    "os"
+    "path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -704,10 +731,16 @@ existing source code files for the project.
 ```
 
 We can now call the `GenerateCode` function with the `README.md` file as the
-only input and this output directory as the destination.
+only input and this output directory as the destination. We will also need to
+delete the `go.mod` file that gets generated since the `packages.Load` call we
+use during validation will fail if it is there.
 
 ```go {name="test_generate_code"}
     err := GenerateCode([]string{`README.md`}, outputDirectory)
+    require.NoError(t, err)
+
+    // should not be present during package validation
+    err = os.Remove(filepath.Join(outputDirectory, "go.mod"))
     require.NoError(t, err)
 ```
 

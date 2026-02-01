@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,6 +20,10 @@ func TestLiterate(t *testing.T) {
 	//--== GENERATE CODE
 	//--========================================--
 	err := GenerateCode([]string{`README.md`}, outputDirectory)
+	require.NoError(t, err)
+
+	// should not be present during package validation
+	err = os.Remove(filepath.Join(outputDirectory, "go.mod"))
 	require.NoError(t, err)
 
 	//--========================================--
