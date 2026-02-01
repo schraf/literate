@@ -1,4 +1,4 @@
-package internal
+package main
 
 func GenerateCode(inputs []string, output string) error {
 	storage := NewCodeBlockStorage()

@@ -4,8 +4,6 @@ import (
 	"flag"
 	"log/slog"
 	"os"
-
-	"github.com/schraf/literate/internal"
 )
 
 func main() {
@@ -41,7 +39,7 @@ func main() {
 	//--== GENERATE SOURCE CODE FILES
 	//--=====================================================================--
 
-	if err := internal.GenerateCode(inputs, output); err != nil {
+	if err := GenerateCode(inputs, output); err != nil {
 		slog.Error(err.Error())
 		os.Exit(1)
 	}

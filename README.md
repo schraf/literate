@@ -170,18 +170,15 @@ slog.SetDefault(slog.New(handler))
 #### Main
 
 The `main` will parse the command line arguments, setup logging, and then
-invoke the literate code generation process by using the `internal` package of
-this project.
+invoke the literate code generation process by calling `GenerateCode`.
 
-```go name="main" filename="cmd/main.go"
+```go name="main" filename="main.go"
 package main
 
 import (
 	"flag"
 	"log/slog"
 	"os"
-
-	"github.com/schraf/literate/internal"
 )
 
 func main() {
@@ -193,14 +190,14 @@ func main() {
 	//--== GENERATE SOURCE CODE FILES
 	//--=====================================================================--
 
-	if err := internal.GenerateCode(inputs, output); err != nil {
+	if err := GenerateCode(inputs, output); err != nil {
 		slog.Error(err.Error())
 		os.Exit(1)
 	}
 }
 ```
 
-### Internal Package
+### Code Generation
 
 #### Code Block Attributes
 
@@ -313,10 +310,10 @@ func (s *CodeBlockStorage) AddCodeBlock(block *CodeBlock) error {
 ```
 
 With these now in place, we will group this code together inside a single
-`codeblock.go` file in the internal package.
+`codeblock.go` file.
 
-```go name="codeblock" filename="internal/codeblock.go"
-package internal
+```go name="codeblock" filename="codeblock.go"
+package main
 
 import (
 	"fmt"
@@ -464,10 +461,10 @@ for i := 0; i < lines.Len(); i++ {
 codeBlock.Body = codeBody.String()
 ```
 
-And here is the output file for the parser function in the `internal` package.
+And here is the output file for the parser function.
 
-```go name="parser" filename="internal/parser.go"
-package internal
+```go name="parser" filename="parser.go"
+package main 
 
 import (
 	"bytes"
@@ -592,10 +589,10 @@ func (p *CodeBlockProcessor) ProcessCodeBlock(name string) (string, error) {
 }
 ```
 
-Finally, we combine these parts into `internal/processor.go`.
+Finally, we combine these parts into `processor.go`.
 
-```go name="processor" filename="internal/processor.go"
-package internal
+```go name="processor" filename="processor.go"
+package main
 
 import (
 	"bytes"
@@ -635,8 +632,8 @@ This function will handle:
 - Constructing a code block storage from each code block
 - Processing each code block output file
 
-```go name="generate" filename="internal/generate.go"
-package internal
+```go name="generate" filename="generate.go"
+package main
 
 func GenerateCode(inputs []string, output string) error {
 	storage := NewCodeBlockStorage()
@@ -660,4 +657,75 @@ func GenerateCode(inputs []string, output string) error {
 	return nil
 }
 ```
+
+### Testing
+
+To test the project we will have the generated code generate itself again by
+parsing this `README.md` file.
+
+We will use the `testify` package for performing the tests. Here is the
+skeleton for the test file.
+
+```go {name="main_test" filename="main_test.go"}
+package main
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+    "golang.org/x/tools/go/packages"
+)
+
+func TestLiterate(t *testing.T) {
+	//--========================================--
+	//--== CREATE TEMPORARY OUTPUT DIRECTORY
+	//--========================================--
+    {{include "test_create_output_directory"}}
+
+	//--========================================--
+	//--== GENERATE CODE
+	//--========================================--
+    {{include "test_generate_code"}}
+
+	//--========================================--
+	//--== VALIDATE GENERATED CODE
+	//--========================================--
+    {{include "test_validate_code"}}
+}
+```
+
+We will have the test create a temporary output directory to store the
+generated source code files. This is because we don't want to dirty the
+existing source code files for the project.
+
+```go {name="test_create_output_directory"}
+    outputDirectory := t.TempDir()
+```
+
+We can now call the `GenerateCode` function with the `README.md` file as the
+only input and this output directory as the destination.
+
+```go {name="test_generate_code"}
+    err := GenerateCode([]string{`README.md`}, outputDirectory)
+    require.NoError(t, err)
+```
+
+To validate the generated code we will use the builtin `go/parser` package.
+
+```go {name="test_validate_code"}
+cfg := &packages.Config{
+    Mode:  packages.NeedTypes | packages.NeedSyntax | packages.NeedImports,
+    Dir:   outputDirectory, 
+    Tests: false,
+}
+
+pkgs, err := packages.Load(cfg, ".")
+require.NoError(t, err)
+
+for _, pkg := range pkgs {
+	assert.Empty(t, pkg.Errors)
+}
+```
+
 

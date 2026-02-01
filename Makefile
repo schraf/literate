@@ -1,12 +1,4 @@
-all: deps vet test build
-
-vet:
-	@echo "Vetting code..."
-	@go vet ./...
-
-fmt:
-	@echo "Formatting code..."
-	@go fmt ./...
+all: deps generate test build
 
 test:
 	@echo "Running tests..."
@@ -14,35 +6,33 @@ test:
 
 build:
 	@echo "Building..."
-	@go build -o literate ./cmd/...
-
-run:
-	@echo "Running..."
-	@go run ./cmd/...
+	@go build ./...
 
 generate:
 	@echo "Generating..."
-	@go run ./cmd/... README.md
+	@./cmd README.md
+	@echo "Formatting..."
 	@go fmt ./...
-
-doc:
-	@echo "Generating documentation..."
-	@go doc -all
+	@echo "Tidying..."
+	@go mod download
+	@go mod tidy
+	@echo "Vetting code..."
+	@go vet ./...
 
 deps:
 	@echo "Installing dependencies..."
-	@go mod download
-	@go mod tidy
+	@GOBIN=$(shell pwd) go install github.com/schraf/literate/cmd@latest
+
+clean:
+	@echo "Cleaning..."
+	@rm -f literate
 
 help:
 	@echo "Available targets:"
-	@echo "  all    - Run vet and test"
-	@echo "  vet    - Vet the code"
-	@echo "  fmt    - Format the code"
+	@echo "  all    - Run generate, test and build"
 	@echo "  test   - Run tests"
 	@echo "  build  - Build the literate executable"
-	@echo "  run    - Run the literate application"
-	@echo "  doc    - Generate documentation"
 	@echo "  deps   - Install dependencies"
+	@echo "  clean  - Deletes any intermediate files"
 	@echo ""
 	@echo "  help   - Show this help message"
