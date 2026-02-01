@@ -1,16 +1,18 @@
-all: deps generate test build
+LITERATE_BIN := ./literate
+
+all: generate test build
 
 test:
 	@echo "Running tests..."
 	@go test ./...
 
-build:
+build: generate
 	@echo "Building..."
 	@go build ./...
 
-generate:
+generate: $(LITERATE_BIN)
 	@echo "Generating..."
-	@./cmd README.md
+	@$(LITERATE_BIN) README.md
 	@echo "Formatting..."
 	@go fmt ./...
 	@echo "Tidying..."
@@ -19,20 +21,20 @@ generate:
 	@echo "Vetting code..."
 	@go vet ./...
 
-deps:
-	@echo "Installing dependencies..."
-	@GOBIN=$(shell pwd) go install github.com/schraf/literate/cmd@latest
+$(LITERATE_BIN):
+	@echo "Installing literate binary..."
+	@GOBIN=$(shell pwd) go install github.com/schraf/literate@66006c6
 
 clean:
 	@echo "Cleaning..."
-	@rm -f literate
+	@rm -f $(LITERATE_BIN)
 
 help:
 	@echo "Available targets:"
-	@echo "  all    - Run generate, test and build"
-	@echo "  test   - Run tests"
-	@echo "  build  - Build the literate executable"
-	@echo "  deps   - Install dependencies"
-	@echo "  clean  - Deletes any intermediate files"
+	@echo "  all      - Run generate, test and build"
+	@echo "  generate - Generates the code from README.md"
+	@echo "  test     - Run tests"
+	@echo "  build    - Build the literate executable"
+	@echo "  clean    - Deletes any intermediate files"
 	@echo ""
-	@echo "  help   - Show this help message"
+	@echo "  help     - Show this help message"
