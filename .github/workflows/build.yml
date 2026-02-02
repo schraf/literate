@@ -49,7 +49,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: literate-generated
-          if-no-files-found: error
           path: |
             LICENSE
             go.mod
@@ -78,7 +77,6 @@ jobs:
 
       - name: Archive Build
         uses: actions/upload-artifact@v4
-        if-no-files-found: error
         with:
           name: literate-${{ matrix.os }}
           path: literate*
