@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - 'v*'
 jobs:
   test:
     name: Test
@@ -19,10 +21,39 @@ jobs:
       
       - name: Generate Code
         run: make generate
-      
+
       - name: Run tests
         run: make test
+
+  generate:
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    needs: test
+    name: Generate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+      
+      - name: Generate Code
+        run: make generate
+
+      - name: Delete literate binary
+        run: rm literate
+      
+      - name: Archive Generated Code
+        uses: actions/upload-artifact@v4
+        with:
+          name: literate-generated
+          path: literate
+
   build:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: test
     name: Build
     strategy:
       matrix:
@@ -44,4 +75,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: literate-${{ matrix.os }}
-          path: literate
+          path: literate*
