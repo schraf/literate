@@ -12,7 +12,7 @@ function(literate_init GIT_TAG)
     
     add_custom_command(
         OUTPUT "${LITERATE_BIN}"
-        COMMAND go build -o "${LITERATE_BIN}" ./...
+        COMMAND make install PREFIX=${CMAKE_BINARY_DIR}
         WORKING_DIRECTORY "${literate_SOURCE_DIR}"
         COMMENT "Building literate tool..."
         VERBATIM

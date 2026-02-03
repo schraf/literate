@@ -1,4 +1,11 @@
-LITERATE_BIN := ./literate
+GOPATH := $(shell go env GOPATH)
+GOBIN := $(GOPATH)/bin
+LOCAL_BIN := $(GOBIN)/literate
+
+PREFIX ?= /usr/local
+BINDIR := $(PREFIX)/bin
+
+.PHONY: all test build generate deps clean help install
 
 all: generate test build
 
@@ -6,13 +13,19 @@ test:
 	@echo "Running tests..."
 	@go test ./...
 
+install: build
+	@echo "Installing..."
+	go install .
+	mkdir -p $(DESTDIR)$(BINDIR)
+	cp $(LOCAL_BIN) $(DESTDIR)$(BINDIR)/literate
+
 build: generate
 	@echo "Building..."
 	@go build ./...
 
-generate: $(LITERATE_BIN)
+generate: $(LOCAL_BIN)
 	@echo "Generating..."
-	@$(LITERATE_BIN) README.md
+	@$(LOCAL_BIN) README.md
 	@echo "Formatting..."
 	@go fmt ./...
 	@echo "Tidying..."
@@ -21,13 +34,16 @@ generate: $(LITERATE_BIN)
 	@echo "Vetting code..."
 	@go vet ./...
 
-$(LITERATE_BIN):
+deps:
 	@echo "Installing literate binary..."
-	@GOBIN=$(shell pwd) go install github.com/schraf/literate@latest
+	@./install.sh
+
+$(LOCAL_BIN):
+	@make deps
 
 clean:
 	@echo "Cleaning..."
-	@rm -f $(LITERATE_BIN) *.go go.mod go.sum
+	@rm -f literate *.go go.mod go.sum
 
 help:
 	@echo "Available targets:"
@@ -35,6 +51,8 @@ help:
 	@echo "  generate - Generates the code from README.md"
 	@echo "  test     - Run tests"
 	@echo "  build    - Build the literate executable"
+	@echo "  deps     - Install dependencies"
+	@echo "  install  - Install literate build"
 	@echo "  clean    - Deletes any intermediate files"
 	@echo ""
 	@echo "  help     - Show this help message"
