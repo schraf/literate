@@ -7,7 +7,7 @@ BINDIR := $(PREFIX)/bin
 
 .PHONY: all test build generate deps clean help install
 
-all: generate test build
+all: generate test
 
 test:
 	@echo "Running tests..."
@@ -23,7 +23,9 @@ build: generate
 	@echo "Building..."
 	@go build ./...
 
-generate: $(LOCAL_BIN)
+generate: main.go
+
+main.go: README.md $(LOCAL_BIN)
 	@echo "Generating..."
 	@$(LOCAL_BIN) README.md
 	@echo "Formatting..."
