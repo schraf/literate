@@ -9,7 +9,7 @@ BINDIR := $(PREFIX)/bin
 
 all: generate test
 
-test:
+test: generate
 	@echo "Running tests..."
 	@go test ./...
 
