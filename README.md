@@ -42,20 +42,53 @@ It allows you to write your program as a Markdown document, explaining your logi
 
 ### Installation
 
-Clone the repository and build the project using the provided `Makefile`:
+#### Quick Install (macOS & Linux)
 
-```bash
-make build
+If you have Go and curl installed, you can install the latest version of
+literate directly with the following one-liner:
+
+```Bash
+curl -fsSL https://raw.githubusercontent.com/schraf/literate/main/install.sh | bash
 ```
 
-This will create the `literate` executable.
+> [!IMPORTANT]
+> It is a security best practice to always inspect third-party
+> scripts before piping them into your shell. You can view the contents of the
+> installer
+> [here](https://raw.githubusercontent.com/schraf/literate/main/install.sh).
+
+**What this script does:**
+
+1. Creates a secure temporary directory.
+2. Fetches the latest literate-generated.zip from the GitHub Release assets.
+3. Unpacks the source and runs go install ./... to build and move the binary to your $GOPATH/bin.
+4. Cleans up all temporary files.
+
+#### Installing from Source
+
+If you prefer to build the tool manually from the source code, follow these
+steps. This requires Go 1.24+ to be installed on your system.
+
+```bash
+# Clone the repository
+git clone https://github.com/schraf/literate.git
+cd literate
+
+# Build and install the binary
+go install ./...
+```
+
+> [!NOTE]
+> The go install command will compile the code and place the resulting binary
+> in your $GOPATH/bin directory (usually ~/go/bin). Ensure this directory is in
+> your system's PATH to run literate from anywhere.
 
 ### Usage
 
 Run the tool by providing input Markdown files and an optional output directory.
 
 ```bash
-./literate [flags] <input-files>
+literate [flags] <input-files>
 ```
 
 #### Flags
@@ -66,7 +99,7 @@ Run the tool by providing input Markdown files and an optional output directory.
 #### Example
 
 ```bash
-./literate -output ./src -verbose design_doc.md
+literate -output ./src -verbose design_doc.md
 ```
 
 ### CMake Integration
