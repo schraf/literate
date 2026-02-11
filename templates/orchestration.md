@@ -1,4 +1,4 @@
-# 5. The Orchestration
+# Orchestration
 
 This is the conclusion of the document. It ties everything together.
 
@@ -22,9 +22,9 @@ algorithms, and saves the output.
 ```{name="main" filename="main.EXT"}
 {{include "file_header"}}
 
-//--=====================================================================--
-//--== MAIN
-//--=====================================================================--
+// ╔════════════════════════════════════════════════════════════════════╗
+// ║ MAIN                                                               ║
+// ╚════════════════════════════════════════════════════════════════════╝
 
 {{include "main_execution"}}
 ```

@@ -2,7 +2,7 @@
 
 This module represents a core component of the system.
 
-## The Vocabulary (Data Models)
+## Data Models
 
 This corresponds to the **"Nouns"** of your system. We define our data
 structures early so the reader understands the objects being manipulated.
@@ -21,12 +21,12 @@ Explain the rules of your data (e.g., *"The 'ID' must never be empty"*).
 [INVARIANT FUNCTIONS]
 ```
 
-## The Core (Algorithms)
+## Algorithm
 
 This is the **"Climax"** of the module—the **"Verbs"**. This section should be
 text-heavy, explaining the logic deeply.
 
-### Logic Chunk A: Pre-processing
+### Pre-processing
 
 First, we prepare the data for the operation.
 
@@ -34,7 +34,7 @@ First, we prepare the data for the operation.
 [PREPROCESSING FUNCTIONS]
 ```
 
-### Logic Chunk B: Core Transformation
+### Processing
 
 This is the heart of the algorithm.
 
@@ -42,7 +42,7 @@ This is the heart of the algorithm.
 [PROCESSING FUNCTIONS]
 ```
 
-### Logic Chunk C: Post-processing
+### Post-processing
 
 Cleanup and return.
 
@@ -55,27 +55,27 @@ Cleanup and return.
 We assemble the chunks into the final function.
 
 ```go {name="module_algorithm"}
-//--========================================--
-//--== PREPROCESSING
-//--========================================--
+// ┌─────────────────────────────────┐
+// │ PREPROCESSING                   │
+// └─────────────────────────────────┘
 
 {{include "module_preprocessing"}}
 
-//--========================================--
-//--== PROCESSING
-//--========================================--
+// ┌─────────────────────────────────┐
+// │ PROCESSING                      │
+// └─────────────────────────────────┘
 
 {{include "module_processing"}}
 
-//--========================================--
-//--== POSTPROCESSING
-//--========================================--
+// ┌─────────────────────────────────┐
+// │ POSTPROCESSING                  │
+// └─────────────────────────────────┘
 
 {{include "module_postprocessing"}}
 
-//--========================================--
-//--== MODULE ENTRY POINT
-//--========================================--
+// ┌─────────────────────────────────┐
+// │ MODULE ENTRY POINT              │
+// └─────────────────────────────────┘
 
 [ENTRY POINTS]
 ```
@@ -85,21 +85,21 @@ We assemble the chunks into the final function.
 ```{name="module_source" filename="module_name.EXT"}
 {{include "file_header"}}
 
-//--=====================================================================--
-//--== DATA MODELS
-//--=====================================================================--
+// ╔════════════════════════════════════════════════════════════════════╗
+// ║ DATA MODELS                                                        ║
+// ╚════════════════════════════════════════════════════════════════════╝
 
 {{include "module_datamodels"}}
 
-//--=====================================================================--
-//--== DATA VALIDATION
-//--=====================================================================--
+// ╔════════════════════════════════════════════════════════════════════╗
+// ║ DATA VALIDATION                                                    ║
+// ╚════════════════════════════════════════════════════════════════════╝
 
 {{include "module_invariants"}}
 
-//--=====================================================================--
-//--== ALGORITHMS
-//--=====================================================================--
+// ╔════════════════════════════════════════════════════════════════════╗
+// ║ ALGORITHM                                                          ║
+// ╚════════════════════════════════════════════════════════════════════╝
 
 {{include "module_algorithm"}}
 ```

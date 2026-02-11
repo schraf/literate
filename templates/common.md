@@ -1,4 +1,4 @@
-# 3. The Common Toolkit
+# Common
 
 These are the small helpers that don't deserve their own chapter but are
 necessary for the heavy lifting. Placing them here prevents interrupting the
@@ -25,15 +25,15 @@ Simple calculations or wrappers used in multiple places.
 ```{name="common" filename="common.EXT"}
 {{include "file_header"}}
 
-//--=====================================================================--
-//--== COMMON CONVERSION FUNCTIONS
-//--=====================================================================--
+// ╔════════════════════════════════════════════════════════════════════╗
+// ║ COMMON CONVERSION FUNCTIONS                                        ║
+// ╚════════════════════════════════════════════════════════════════════╝
 
 {{include "common_conversions"}}
 
-//--=====================================================================--
-//--== COMMON UTILITY FUNCTIONS
-//--=====================================================================--
+// ╔════════════════════════════════════════════════════════════════════╗
+// ║ COMMON UTILITY FUNCTIONS                                           ║
+// ╚════════════════════════════════════════════════════════════════════╝
 
 {{include "common_utilities"}}
 ```

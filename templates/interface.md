@@ -1,4 +1,4 @@
-# 4. The Interface
+# Interface
 
 Now that we have defined the environment and common tools, we define how data
 enters and leaves the system. In a narrative sense, I/O is often "dirty" work.
@@ -26,15 +26,15 @@ Functions to save results or generate reports.
 ```{name="interface" filename="interface.EXT"}
 {{include "file_header"}}
 
-//--=====================================================================--
-//--== INPUTS
-//--=====================================================================--
+// ╔════════════════════════════════════════════════════════════════════╗
+// ║ INPUTS                                                             ║
+// ╚════════════════════════════════════════════════════════════════════╝
 
 {{include "interface_inputs"}}
 
-//--=====================================================================--
-//--== OUTPUTS
-//--=====================================================================--
+// ╔════════════════════════════════════════════════════════════════════╗
+// ║ OUTPUTS                                                            ║
+// ╚════════════════════════════════════════════════════════════════════╝
 
 {{include "interface_outputs"}}
 ```
