@@ -9,9 +9,9 @@ to generate the source code from these Markdown files.
 We provide a convenient way to install the `literate` tool using a shell script.
 
 ```makefile {name="makefile" filename="Makefile"}
-.PHONY: all build clean deps
+.PHONY: all build clean deps test
 
-all: build
+all: test build
 
 deps:
 	curl -fsSL https://raw.githubusercontent.com/schraf/literate/main/install.sh | bash
@@ -19,6 +19,9 @@ deps:
 build:
 	$$(go env GOPATH)/bin/literate [YOUR MARKDOWN FILES]
 	[COMMAND TO BUILD PROJECT]
+
+test:
+    [COMMEND TO RUN PROJECT TESTS]
 
 clean:
 	rm -f [BUILD ARTIFACTS]
