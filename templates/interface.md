@@ -9,7 +9,7 @@ testable and clean.
 
 Functions to read CSVs, APIs, databases, or user input.
 
-```go {name="interface_inputs"}
+```{name="interface_inputs"}
 [INPUT FUNCTIONS]
 ```
 
@@ -17,7 +17,7 @@ Functions to read CSVs, APIs, databases, or user input.
 
 Functions to save results or generate reports.
 
-```go {name="interface_outputs"}
+```{name="interface_outputs"}
 [OUTPUT FUNCTIONS]
 ```
 
