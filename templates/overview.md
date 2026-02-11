@@ -44,7 +44,7 @@ Every generated source file should include a standard header with copyright and
 license information. We define this header once here and include it in all our
 source files.
 
-```go {name="file_header"}
+```{name="file_header"}
 // ╔════════════════════════════════════════════════════════════════════╗
 // ║ Copyright (c) [YEAR] [YOUR NAME].                                  ║
 // ║                                                                    ║

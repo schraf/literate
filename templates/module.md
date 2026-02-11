@@ -7,7 +7,7 @@ This module represents a core component of the system.
 This corresponds to the **"Nouns"** of your system. We define our data
 structures early so the reader understands the objects being manipulated.
 
-### Schema Definitions
+### Data Definitions
 
 ```{name="module_datamodels"}
 [DATA MODELS]
@@ -54,7 +54,7 @@ Cleanup and return.
 
 We assemble the chunks into the final function.
 
-```go {name="module_algorithm"}
+```{name="module_algorithm"}
 // ┌─────────────────────────────────┐
 // │ PREPROCESSING                   │
 // └─────────────────────────────────┘
@@ -102,5 +102,34 @@ We assemble the chunks into the final function.
 // ╚════════════════════════════════════════════════════════════════════╝
 
 {{include "module_algorithm"}}
+```
+
+## Testing
+
+To validate the module in isolation we should create test code. This code
+should not be part of the main application but rather a build step to help
+catch bugs in development early.
+
+### Test Case : [YOUR TEST CASE]
+
+You should create multiple test case sections each defining a individual test
+for this module.
+
+```{name="module_test_case"}
+// ╔════════════════════════════════════════════════════════════════════╗
+// ║ TEST CASE NAME                                                     ║
+// ╚════════════════════════════════════════════════════════════════════╝
+
+[TEST FUNCTION]
+```
+
+### Test Source File
+
+```{name="module_test" filename="module_name_test.EXT"}
+{{include "file_header"}}
+
+{{include "test_preamble"}}
+
+[INSERT ALL TEST CASES]
 ```
 
