@@ -2,7 +2,7 @@
 
 > A short description of the project.
 
-## The Preamble: Context & Problem Statement
+## Context & Problem Statement
 
 Before writing a single line of code, we must set the stage.
 
@@ -28,7 +28,7 @@ of the thought process.
 
 ## License
 
-This project is licensed under the [LICENSE NAME.
+This project is licensed under the [LICENSE NAME].
 
 ```{name="LICENSE" filename="LICENSE"}
 [LICENSE NAME]
